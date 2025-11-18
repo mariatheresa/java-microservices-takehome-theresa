@@ -1,0 +1,80 @@
+package com.example.gicjava.order.order.adapter;
+
+import com.example.gicjava.order.order.domain.Order;
+import com.example.gicjava.order.order.domain.OrderService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import java.util.List;
+import java.util.stream.Collectors;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+@RestController
+@RequestMapping("/api/orders")
+@Tag(name = "Orders", description = "Order management endpoints")
+public class OrderController {
+
+  private static final Logger logger = LoggerFactory.getLogger(OrderController.class);
+  private final OrderService orderService;
+
+  public OrderController(OrderService orderService) {
+    this.orderService = orderService;
+  }
+
+  @PostMapping
+  @Operation(summary = "Create a new order", description = "Creates a new order and publishes an OrderCreatedEvent")
+  @ApiResponses(value = {
+      @ApiResponse(responseCode = "201", description = "Order created successfully",
+          content = @Content(schema = @Schema(implementation = OrderResponse.class))),
+      @ApiResponse(responseCode = "400", description = "Invalid request data",
+          content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+  })
+  public ResponseEntity<OrderResponse> createOrder(@RequestBody CreateOrderRequest request) {
+    logger.info("Received request to create order: amount={}, email={}",
+        request.amount(), request.customerEmail());
+
+    Order order = orderService.createOrder(request.amount(), request.customerEmail());
+
+    OrderResponse response = new OrderResponse(
+        order.orderId(),
+        order.amount(),
+        order.customerEmail(),
+        order.createdAt()
+    );
+
+    logger.info("Order created: {}", order.orderId());
+    return ResponseEntity.status(HttpStatus.CREATED).body(response);
+  }
+
+  @GetMapping
+  @Operation(summary = "Get all orders", description = "Retrieves a list of all orders")
+  @ApiResponses(value = {
+      @ApiResponse(responseCode = "200", description = "Successfully retrieved orders",
+          content = @Content(schema = @Schema(implementation = OrderResponse.class)))
+  })
+  public ResponseEntity<List<OrderResponse>> getAllOrders() {
+    logger.info("Received request to get all orders");
+
+    List<OrderResponse> responses = orderService.getAllOrders().stream()
+        .map(order -> new OrderResponse(
+            order.orderId(),
+            order.amount(),
+            order.customerEmail(),
+            order.createdAt()
+        ))
+        .collect(Collectors.toList());
+
+    return ResponseEntity.ok(responses);
+  }
+}
