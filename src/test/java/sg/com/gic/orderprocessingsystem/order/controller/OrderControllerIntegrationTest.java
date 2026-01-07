@@ -1,5 +1,6 @@
 package sg.com.gic.orderprocessingsystem.order.controller;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -10,6 +11,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import sg.com.gic.orderprocessingsystem.order.dto.CreateOrderRequest;
+import sg.com.gic.orderprocessingsystem.order.dto.OrderResponse;
 
 import static org.hamcrest.Matchers.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -182,6 +184,34 @@ class OrderControllerIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[*].customerEmail", hasItem("consistent@example.com")))
                 .andExpect(jsonPath("$[*].amount", hasItem(75.50)));
+    }
+
+    @Test
+    @DisplayName("Should resend order create event successfully")
+    void shouldResendOrderCreateEventSuccessfully() throws Exception {
+        CreateOrderRequest request1 = new CreateOrderRequest(50.0, "user1@test.com");
+        String createResponse = mockMvc.perform(post("/api/orders")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request1)))
+                .andExpect(status().isCreated())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        JsonNode createdJson = objectMapper.readTree(createResponse);
+        String orderId = createdJson.get("orderId").asText();
+
+        mockMvc.perform(post("/api/orders/" + orderId + "/resend")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.orderId").value(orderId))
+                .andExpect(jsonPath("$.customerEmail").value("user1@test.com"));
+
+        mockMvc.perform(get("/api/orders")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[*].orderId", hasItem(orderId)));
+
     }
 }
 

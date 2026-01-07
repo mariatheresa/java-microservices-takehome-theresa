@@ -19,6 +19,23 @@ public class OrderService {
     this.eventPublisher = eventPublisher;
   }
 
+  public Order resendOrder(String orderId) {
+    return orders.stream()
+        .filter(o -> o.orderId().equals(orderId))
+        .findFirst()
+        .map(order -> {
+          // Republish the event
+          OrderCreatedEvent event = new OrderCreatedEvent(
+              order.orderId(),
+              order.amount(),
+              order.customerEmail()
+          );
+          eventPublisher.publish(event);
+          return order;
+        })
+        .orElseThrow(() -> new IllegalArgumentException("Order not found: " + orderId));
+  }
+
   public Order createOrder(Double amount, String customerEmail) {
     String orderId = UUID.randomUUID().toString();
     Order order = new Order(orderId, amount, customerEmail, LocalDateTime.now());

@@ -8,6 +8,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import sg.com.gic.orderprocessingsystem.eventbus.EventPublisher;
 import sg.com.gic.orderprocessingsystem.eventbus.event.OrderCreatedEvent;
@@ -296,6 +297,27 @@ class OrderServiceTest {
         assertNotNull(event.orderId());
         assertEquals(amount, event.amount());
         assertEquals(email, event.customerEmail());
+    }
+
+    @Test
+    @DisplayName("Should republish OrderCreatedEvent when resending order")
+    void shouldRepublishEventWhenResendingOrder() {
+        // Given
+        Order created = orderService.createOrder(120.0, "gas@gmail.com");
+
+        Mockito.clearInvocations(eventPublisher);
+
+        // When
+        Order resent = orderService.resendOrder(created.orderId());
+
+        // Then
+        verify(eventPublisher, times(1)).publish(eventCaptor.capture());
+        OrderCreatedEvent captured = eventCaptor.getValue();
+        assertEquals(created.orderId(), captured.orderId());
+        assertEquals(created.amount(), captured.amount());
+        assertEquals(created.customerEmail(), captured.customerEmail());
+        assertEquals(created, resent);
+
     }
 }
 

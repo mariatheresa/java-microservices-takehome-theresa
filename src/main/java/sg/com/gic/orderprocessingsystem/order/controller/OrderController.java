@@ -13,6 +13,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -33,6 +34,30 @@ public class OrderController {
 
   public OrderController(OrderService orderService) {
     this.orderService = orderService;
+  }
+
+  @PostMapping("/{orderId}/resend")
+  @Operation(summary = "Resend an order create event",description = "Re-publishes the create order event for an existing order")
+  @ApiResponses(value = {
+      @ApiResponse(responseCode = "200", description = "Resend triggered",
+          content = @Content(schema = @Schema(implementation = OrderResponse.class))),
+      @ApiResponse(responseCode = "404", description = "Order not found",
+          content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+  })
+  public ResponseEntity<OrderResponse> resendOrder(@PathVariable String orderId){
+     logger.info("Received request to resend order create event for orderId={}", orderId);
+
+     Order order = orderService.resendOrder(orderId);
+
+     OrderResponse response = new OrderResponse(
+         order.orderId(),
+         order.amount(),
+         order.customerEmail(),
+         order.createdAt()
+     );
+
+     logger.info("Resend triggered for orderId={}", orderId);
+     return ResponseEntity.ok(response);
   }
 
   @PostMapping

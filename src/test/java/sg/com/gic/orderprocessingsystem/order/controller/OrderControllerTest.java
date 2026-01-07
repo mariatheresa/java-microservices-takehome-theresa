@@ -214,5 +214,45 @@ class OrderControllerTest {
 
         verify(orderService, times(1)).createOrder(-100.0, "test@example.com");
     }
+
+    @Test
+    @DisplayName("Should resend order successfully when order exists")
+    void shouldResendOrderSuccessfully() throws Exception {
+        // Given
+        String orderId = "order-789";
+        Order expectedOrder = new Order(orderId, 300.0, "resend@example.com", LocalDateTime.now());
+
+        when(orderService.resendOrder(orderId)).thenReturn(expectedOrder);
+
+        // When & Then
+        mockMvc.perform(post("/api/orders/{orderId}/resend",orderId)
+            .contentType(MediaType.APPLICATION_JSON))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.orderId").value(orderId))
+            .andExpect(jsonPath("$.amount").value(300.0))
+            .andExpect(jsonPath("$.customerEmail").value("resend@example.com"))
+            .andExpect(jsonPath("$.createdAt").exists());
+
+        verify(orderService, times(1)).resendOrder(orderId);
+    }
+
+    @Test
+    @DisplayName("Should return bad request when resending non-existent order")
+    void shouldReturnBadRequestWhenResendingNonExistentOrder() throws Exception {
+        // Given
+        String orderId = "non-existent-order";
+
+        when(orderService.resendOrder(anyString()))
+            .thenThrow(new IllegalArgumentException("Order not found: " + orderId));
+
+        // When & Then
+        mockMvc.perform(post("/api/orders/{orderId}/resend",orderId)
+            .contentType(MediaType.APPLICATION_JSON))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.status").value(400))
+            .andExpect(jsonPath("$.message").value("Order not found: " + orderId));
+
+        verify(orderService, times(1)).resendOrder(orderId);
+    }
 }
 
