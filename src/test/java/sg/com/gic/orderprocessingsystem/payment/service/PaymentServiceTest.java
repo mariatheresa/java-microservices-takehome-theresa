@@ -1,5 +1,6 @@
 package sg.com.gic.orderprocessingsystem.payment.service;
 
+import java.util.ArrayList;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -9,6 +10,8 @@ import org.mockito.Captor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import sg.com.gic.orderprocessingsystem.eventbus.EventPublisher;
 import sg.com.gic.orderprocessingsystem.eventbus.event.OrderCreatedEvent;
 import sg.com.gic.orderprocessingsystem.eventbus.event.PaymentSucceededEvent;
@@ -16,6 +19,8 @@ import sg.com.gic.orderprocessingsystem.payment.domain.Payment;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import sg.com.gic.orderprocessingsystem.payment.entity.PaymentEntity;
+import sg.com.gic.orderprocessingsystem.payment.repository.PaymentRepository;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
@@ -29,15 +34,31 @@ class PaymentServiceTest {
     @Mock
     private EventPublisher eventPublisher;
 
+    @Mock
+    private PaymentRepository paymentRepository;
+
     @InjectMocks
     private PaymentService paymentService;
 
     @Captor
     private ArgumentCaptor<PaymentSucceededEvent> eventCaptor;
 
+    private List<PaymentEntity> inMemoryStore;
+
     @BeforeEach
     void setUp() {
-        // Reset is handled by @ExtendWith(MockitoExtension.class)
+        inMemoryStore = new ArrayList<>();
+
+        // Mock the paymentRepository to store payments in an in-memory list
+
+        lenient().when(paymentRepository.save(any(PaymentEntity.class))).thenAnswer(invocation -> {
+           PaymentEntity entity = invocation.getArgument(0);
+            inMemoryStore.add(entity);
+            return entity;
+        });
+
+        lenient().when(paymentRepository.findAll()).thenReturn(inMemoryStore);
+
     }
 
     @Test

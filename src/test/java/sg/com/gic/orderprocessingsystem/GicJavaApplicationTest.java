@@ -1,5 +1,6 @@
 package sg.com.gic.orderprocessingsystem;
 
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -7,7 +8,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.ApplicationContext;
 import sg.com.gic.orderprocessingsystem.eventbus.EventPublisher;
 import sg.com.gic.orderprocessingsystem.eventbus.EventSubscriber;
-import sg.com.gic.orderprocessingsystem.eventbus.InMemoryEventBus;
+import sg.com.gic.orderprocessingsystem.eventbus.JpaEventPublisher;
 import sg.com.gic.orderprocessingsystem.notification.controller.NotificationController;
 import sg.com.gic.orderprocessingsystem.notification.listener.PaymentSucceededEventListener;
 import sg.com.gic.orderprocessingsystem.notification.service.NotificationService;
@@ -76,9 +77,9 @@ class GicJavaApplicationTest {
     }
 
     @Test
-    @DisplayName("Should have InMemoryEventBus bean")
-    void shouldHaveInMemoryEventBusBean() {
-        InMemoryEventBus eventBus = applicationContext.getBean(InMemoryEventBus.class);
+    @DisplayName("Should have JpaEventPublisher bean")
+    void shouldHaveJpaEventPublisherBean() {
+        JpaEventPublisher eventBus = applicationContext.getBean(JpaEventPublisher.class);
         assertNotNull(eventBus);
     }
 
@@ -91,6 +92,7 @@ class GicJavaApplicationTest {
 
     @Test
     @DisplayName("Should have EventSubscriber bean")
+    @Disabled("EventSubscriber removed - using Spring @EventListener now")
     void shouldHaveEventSubscriberBean() {
         EventSubscriber subscriber = applicationContext.getBean(EventSubscriber.class);
         assertNotNull(subscriber);
@@ -119,11 +121,10 @@ class GicJavaApplicationTest {
     }
 
     @Test
-    @DisplayName("EventBus should implement both EventPublisher and EventSubscriber")
+    @DisplayName("EventBus should implement both EventPublisher")
     void eventBusShouldImplementBothInterfaces() {
-        InMemoryEventBus eventBus = applicationContext.getBean(InMemoryEventBus.class);
+        JpaEventPublisher eventBus = applicationContext.getBean(JpaEventPublisher.class);
         assertThat(eventBus).isInstanceOf(EventPublisher.class);
-        assertThat(eventBus).isInstanceOf(EventSubscriber.class);
     }
 
     @Test

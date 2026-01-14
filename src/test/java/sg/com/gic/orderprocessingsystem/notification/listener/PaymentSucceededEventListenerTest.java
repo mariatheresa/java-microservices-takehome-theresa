@@ -1,6 +1,7 @@
 package sg.com.gic.orderprocessingsystem.notification.listener;
 
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -44,11 +45,9 @@ class PaymentSucceededEventListenerTest {
     }
 
     @Test
+    @Disabled("EventSubscriber removed - using Spring @EventListener now")
     @DisplayName("Should subscribe to PaymentSucceededEvent on initialization")
     void shouldSubscribeOnInit() {
-        // When
-        listener.init();
-
         // Then
         verify(eventSubscriber, times(1)).subscribe(
                 eq(PaymentSucceededEvent.class),
@@ -134,11 +133,9 @@ class PaymentSucceededEventListenerTest {
     }
 
     @Test
+    @Disabled("EventSubscriber removed - using Spring @EventListener now")
     @DisplayName("Should subscribe with correct event type")
     void shouldSubscribeWithCorrectEventType() {
-        // When
-        listener.init();
-
         // Then
         verify(eventSubscriber).subscribe(
                 eq(PaymentSucceededEvent.class),

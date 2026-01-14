@@ -4,17 +4,24 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import sg.com.gic.orderprocessingsystem.eventbus.event.PaymentSucceededEvent;
 import sg.com.gic.orderprocessingsystem.notification.domain.Notification;
+import sg.com.gic.orderprocessingsystem.notification.entity.NotificationEntity;
+import sg.com.gic.orderprocessingsystem.notification.repository.NotificationRepository;
 
 @Service
 public class NotificationService {
 
   private static final Logger logger = LoggerFactory.getLogger(NotificationService.class);
-  private final List<Notification> notifications = new ArrayList<>();
+  private final NotificationRepository notificationRepository;
+
+  public NotificationService(NotificationRepository notificationRepository) {
+    this.notificationRepository = notificationRepository;
+  }
 
   public void processPaymentSucceededEvent(PaymentSucceededEvent event) {
     Notification notification = createNotification(event);
@@ -29,7 +36,13 @@ public class NotificationService {
   }
 
   private void save(Notification notification) {
-    notifications.add(notification);
+    NotificationEntity notificationEntity = new NotificationEntity(
+        notification.notificationId(),
+        notification.orderId(),
+        notification.paymentId(),
+        notification.message(),
+        notification.timestamp());
+    notificationRepository.save(notificationEntity);
   }
 
   private Notification createNotification(PaymentSucceededEvent event) {
@@ -53,6 +66,14 @@ public class NotificationService {
   }
 
   public List<Notification> getAllNotifications() {
-    return notifications;
+    return notificationRepository.findAll()
+        .stream()
+        .map(e -> new Notification(
+            e.getNotificationId(),
+            e.getOrderId(),
+            e.getPaymentId(),
+            e.getMessage(),
+            e.getTimestamp()
+        )).collect(Collectors.toList());
   }
 }

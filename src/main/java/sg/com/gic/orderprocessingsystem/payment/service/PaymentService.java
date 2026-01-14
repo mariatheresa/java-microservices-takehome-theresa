@@ -1,9 +1,9 @@
 package sg.com.gic.orderprocessingsystem.payment.service;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -11,15 +11,18 @@ import sg.com.gic.orderprocessingsystem.eventbus.EventPublisher;
 import sg.com.gic.orderprocessingsystem.eventbus.event.OrderCreatedEvent;
 import sg.com.gic.orderprocessingsystem.eventbus.event.PaymentSucceededEvent;
 import sg.com.gic.orderprocessingsystem.payment.domain.Payment;
+import sg.com.gic.orderprocessingsystem.payment.entity.PaymentEntity;
+import sg.com.gic.orderprocessingsystem.payment.repository.PaymentRepository;
 
 @Service
 public class PaymentService {
 
   private static final Logger logger = LoggerFactory.getLogger(PaymentService.class);
-  private final List<Payment> payments = new ArrayList<>();
   private final EventPublisher eventPublisher;
+  private final PaymentRepository paymentRepository;
 
-  public PaymentService(EventPublisher eventPublisher) {
+  public PaymentService(EventPublisher eventPublisher, PaymentRepository paymentRepository) {
+    this.paymentRepository = paymentRepository;
     this.eventPublisher = eventPublisher;
   }
 
@@ -37,7 +40,12 @@ public class PaymentService {
   }
 
   private void save(Payment payment) {
-    payments.add(payment);
+    PaymentEntity paymentEntity = new PaymentEntity(
+        payment.paymentId(),
+        payment.orderId(),
+        payment.amount(),
+        payment.timestamp());
+    paymentRepository.save(paymentEntity);
   }
 
   private Payment createPayment(OrderCreatedEvent event) {
@@ -70,6 +78,12 @@ public class PaymentService {
   }
 
   public List<Payment> getAllPayments() {
-    return payments;
+    return paymentRepository.findAll().stream()
+        .map(e -> new Payment(
+            e.getPaymentId(),
+            e.getOrderId(),
+            e.getAmount(),
+            e.getCreated_at()
+        )).collect(Collectors.toList());
   }
 }

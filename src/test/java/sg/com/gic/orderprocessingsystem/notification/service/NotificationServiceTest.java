@@ -1,19 +1,26 @@
 package sg.com.gic.orderprocessingsystem.notification.service;
 
+import java.util.ArrayList;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
+import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import sg.com.gic.orderprocessingsystem.eventbus.event.PaymentSucceededEvent;
 import sg.com.gic.orderprocessingsystem.notification.domain.Notification;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import sg.com.gic.orderprocessingsystem.notification.entity.NotificationEntity;
+import sg.com.gic.orderprocessingsystem.notification.repository.NotificationRepository;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("NotificationService Unit Tests")
@@ -22,9 +29,23 @@ class NotificationServiceTest {
     @InjectMocks
     private NotificationService notificationService;
 
+    @Mock
+    private NotificationRepository notificationRepository;
+
+    private List<NotificationEntity> notificationStore;
+
     @BeforeEach
     void setUp() {
-        // Reset is handled by @ExtendWith(MockitoExtension.class)
+        notificationStore = new ArrayList<>();
+
+       lenient().when(notificationRepository.save(any(NotificationEntity.class)))
+            .thenAnswer(invocation -> {
+                NotificationEntity entity = invocation.getArgument(0);
+                notificationStore.add(entity);
+                return entity;
+            });
+
+       when(notificationRepository.findAll()).thenAnswer(invocation -> new ArrayList<>(notificationStore));
     }
 
     @Test

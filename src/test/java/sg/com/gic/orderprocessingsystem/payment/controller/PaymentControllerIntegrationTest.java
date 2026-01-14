@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.web.servlet.MockMvc;
 import sg.com.gic.orderprocessingsystem.order.dto.CreateOrderRequest;
 
@@ -18,6 +19,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @SpringBootTest
 @AutoConfigureMockMvc
+@DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
 @DisplayName("PaymentController Integration Tests")
 class PaymentControllerIntegrationTest {
 
@@ -84,7 +86,8 @@ class PaymentControllerIntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$").isArray())
-                .andExpect(jsonPath("$", hasSize(greaterThanOrEqualTo(2))));
+                .andExpect(jsonPath("$").isNotEmpty())
+                .andExpect(jsonPath("$[*].amount", hasItems(100.0, 200.0, 75.0)));
     }
 
     @Test

@@ -42,18 +42,6 @@ class OrderCreatedEventListenerTest {
         // Reset is handled by @ExtendWith(MockitoExtension.class)
     }
 
-    @Test
-    @DisplayName("Should subscribe to OrderCreatedEvent on initialization")
-    void shouldSubscribeOnInit() {
-        // When
-        listener.init();
-
-        // Then
-        verify(eventSubscriber, times(1)).subscribe(
-                eq(OrderCreatedEvent.class),
-                any()
-        );
-    }
 
     @Test
     @DisplayName("Should handle OrderCreatedEvent correctly")
@@ -116,21 +104,6 @@ class OrderCreatedEventListenerTest {
         assertThrows(RuntimeException.class, () -> {
             listener.handleOrderCreated(event);
         });
-    }
-
-    @Test
-    @DisplayName("Should subscribe with correct event type")
-    void shouldSubscribeWithCorrectEventType() {
-        // When
-        listener.init();
-
-        // Then
-        verify(eventSubscriber).subscribe(
-                eq(OrderCreatedEvent.class),
-                handlerCaptor.capture()
-        );
-
-        assertNotNull(handlerCaptor.getValue());
     }
 
     @Test
